@@ -125,7 +125,7 @@ const questions = [
     type: "matching",
     title: "Match Pathfinding Terms",
     text: "Match each term with its correct definition.",
-    left: ["A", "B", "C"],
+    left: ["A", "B", "C", "D"],
     right: [
       "Point graph",
       "Grid graph",
@@ -140,22 +140,24 @@ const questions = [
     }
   },
 
+  
+  {
+    type: "multiple-choice",
+    title: "Calculate distance",
+    text: "How long will the path be for: Euclidean and Manhattan",
+    options: [
+      { text: "e: 11.14, m: 16", correct: false },
+      { text: "e: 13.63, m: 13", correct: true },
+      { text: "e: 12.04, m: 17", correct: false }
+    ]
+  },
+
   {
     type: "grid",
     title: "Grid Path Drawing",
     text: "Draw a path from Start (green) to End (red). Avoid black squares."
   },
 
-  {
-    type: "multiple-choice",
-    title: "BFS Algorithm",
-    text: "BFS explores nodes in which order?",
-    options: [
-      { text: "Depth-first", correct: false },
-      { text: "Breadth-first", correct: true },
-      { text: "Random", correct: false }
-    ]
-  }
 ];
 
 /* ======================
@@ -377,4 +379,5 @@ renderQuestion();
 </script>
 </body>
 </html>
+
 
