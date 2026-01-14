@@ -1,255 +1,377 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pathfinding Learning Website</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        display: flex;
-        height: 100vh;
-      }
-      /* Sidebar for question list */
-      #sidebar {
-        width: 250px;
-        background-color: #2c3e50;
-        color: #ecf0f1;
-        padding: 20px;
-        box-sizing: border-box;
-        overflow-y: auto;
-      }
-      #sidebar h2 {
-        font-size: 20px;
-        margin-top: 0;
-      }
-      .question-item {
-        cursor: pointer;
-        padding: 10px;
-        margin-bottom: 5px;
-        border-radius: 5px;
-      }
-      .question-item.locked {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-      .question-item.active {
-        background-color: #2980b9;
-      }
-      .question-item.completed {
-        background-color: #27ae60;
-      }
-      /* Main content area */
-      #main {
-        flex: 1;
-        padding: 40px;
-        box-sizing: border-box;
-        overflow-y: auto;
-      }
-      h1 {
-        margin-top: 0;
-      }
-      .answer-btn {
-        display: block;
-        padding: 10px 15px;
-        margin: 10px 0;
-        border: none;
-        border-radius: 5px;
-        background-color: #3498db;
-        color: white;
-        cursor: pointer;
-        text-align: left;
-        transition: background 0.2s;
-      }
-      .answer-btn:hover {
-        background-color: #2980b9;
-      }
-      .answer-btn.correct {
-        background-color: #27ae60;
-      }
-      .answer-btn.incorrect {
-        background-color: #c0392b;
-      }
-      #next-btn {
-        margin-top: 20px;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 5px;
-        background-color: #f39c12;
-        color: white;
-        cursor: pointer;
-        display: none;
-      }
-    </style>
-  </head>
-  <body>
-    <!-- Sidebar / Question List -->
-    <div id="sidebar">
-      <h2>Questions</h2>
-      <div id="question-list"></div>
-    </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pathfinding Learning Website</title>
 
-    <!-- Main content area -->
-    <div id="main">
-      <h1 id="question-title"></h1>
-      <p id="question-text"></p>
-      <div id="answers"></div>
-      <button id="next-btn">Next Question</button>
-    </div>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      display: flex;
+      height: 100vh;
+    }
 
-    <script>
-      // ======================
-      // CUSTOMIZE QUESTIONS HERE
-      // ======================
-      const questions = [
-        {
-          title: "What is pathfinding?",
-          text: "Select the correct definition of pathfinding:",
-          options: [
-            {
-              text: "Drawing maps",
-              correct: false,
-              explanation: "Pathfinding is not just drawing maps.",
-            },
-            {
-              text: "Finding the most efficient path between two points",
-              correct: true,
-              explanation: "Correct! Pathfinding finds the best route.",
-            },
-            {
-              text: "Random movement between nodes",
-              correct: false,
-              explanation: "Incorrect, pathfinding is purposeful.",
-            },
-          ],
-        },
-        {
-          title: "Parent vs Child Nodes",
-          text: "Which is a parent node?",
-          options: [
-            {
-              text: "A node you came from",
-              correct: true,
-              explanation:
-                "Correct! The parent node is the one you expanded from.",
-            },
-            {
-              text: "A node you move to",
-              correct: false,
-              explanation: "That is a child node.",
-            },
-            {
-              text: "Any node in the graph",
-              correct: false,
-              explanation: "Not all nodes are parents.",
-            },
-          ],
-        },
-        {
-          title: "BFS Algorithm",
-          text: "BFS explores nodes in which order?",
-          options: [
-            {
-              text: "Depth-first",
-              correct: false,
-              explanation: "Incorrect, BFS is breadth-first.",
-            },
-            {
-              text: "Breadth-first",
-              correct: true,
-              explanation: "Correct! BFS explores neighbors level by level.",
-            },
-            {
-              text: "Random",
-              correct: false,
-              explanation: "BFS is systematic, not random.",
-            },
-          ],
-        },
-      ];
+    #sidebar {
+      width: 250px;
+      background-color: #2c3e50;
+      color: #ecf0f1;
+      padding: 20px;
+      overflow-y: auto;
+    }
 
-      // ======================
-      // APP LOGIC
-      // ======================
-      let currentQuestionIndex = 0;
-      const progress = Array(questions.length).fill(false); // Track completion
+    .question-item {
+      padding: 10px;
+      margin-bottom: 5px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
 
-      const questionListEl = document.getElementById("question-list");
-      const questionTitleEl = document.getElementById("question-title");
-      const questionTextEl = document.getElementById("question-text");
-      const answersEl = document.getElementById("answers");
-      const nextBtn = document.getElementById("next-btn");
+    .question-item.locked {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
 
-      // Initialize sidebar
-      function renderQuestionList() {
-        questionListEl.innerHTML = "";
-        questions.forEach((q, i) => {
-          const div = document.createElement("div");
-          div.textContent = `${i + 1}. ${q.title}`;
-          div.classList.add("question-item");
-          if (i > 0 && !progress[i - 1]) div.classList.add("locked");
-          if (i === currentQuestionIndex) div.classList.add("active");
-          if (progress[i]) div.classList.add("completed");
-          div.addEventListener("click", () => {
-            if (i === 0 || progress[i - 1]) {
-              currentQuestionIndex = i;
-              renderQuestion();
-            }
-          });
-          questionListEl.appendChild(div);
-        });
+    .question-item.active {
+      background-color: #2980b9;
+    }
+
+    .question-item.completed {
+      background-color: #27ae60;
+    }
+
+    #main {
+      flex: 1;
+      padding: 40px;
+    }
+
+    .answer-btn {
+      display: block;
+      padding: 10px;
+      margin: 10px 0;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .answer-btn.correct {
+      background-color: #27ae60;
+    }
+
+    .answer-btn.incorrect {
+      background-color: #c0392b;
+    }
+
+    #next-btn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #f39c12;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      display: none;
+      cursor: pointer;
+    }
+
+    /* Matching */
+    .match-container {
+      display: flex;
+      gap: 40px;
+    }
+
+    .match-item {
+      padding: 8px;
+      background: #ecf0f1;
+      margin-bottom: 5px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    .selected {
+      background: #f1c40f;
+    }
+
+    /* Grid */
+    canvas {
+      border: 2px solid #333;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+<div id="sidebar">
+  <h2>Questions</h2>
+  <div id="question-list"></div>
+</div>
+
+<div id="main">
+  <h1 id="question-title"></h1>
+  <p id="question-text"></p>
+  <div id="answers"></div>
+  <button id="next-btn">Next Question</button>
+</div>
+
+<script>
+/* ======================
+   QUESTIONS
+====================== */
+
+const questions = [
+  {
+    type: "matching",
+    title: "Match Pathfinding Terms",
+    text: "Match each term with its correct definition.",
+    left: ["Node", "Edge", "Obstacle"],
+    right: [
+      "A point in the graph",
+      "A connection between nodes",
+      "A blocked or impassable area"
+    ],
+    correctMatches: {
+      Node: "A point in the graph",
+      Edge: "A connection between nodes",
+      Obstacle: "A blocked or impassable area"
+    }
+  },
+
+  {
+    type: "grid",
+    title: "Grid Path Drawing",
+    text: "Draw a path from Start (green) to End (red). Avoid black squares."
+  },
+
+  {
+    type: "multiple-choice",
+    title: "BFS Algorithm",
+    text: "BFS explores nodes in which order?",
+    options: [
+      { text: "Depth-first", correct: false },
+      { text: "Breadth-first", correct: true },
+      { text: "Random", correct: false }
+    ]
+  }
+];
+
+/* ======================
+   APP STATE
+====================== */
+
+let currentQuestionIndex = 0;
+const progress = Array(questions.length).fill(false);
+
+const questionListEl = document.getElementById("question-list");
+const questionTitleEl = document.getElementById("question-title");
+const questionTextEl = document.getElementById("question-text");
+const answersEl = document.getElementById("answers");
+const nextBtn = document.getElementById("next-btn");
+
+/* ======================
+   SIDEBAR
+====================== */
+
+function renderQuestionList() {
+  questionListEl.innerHTML = "";
+  questions.forEach((q, i) => {
+    const div = document.createElement("div");
+    div.textContent = `${i + 1}. ${q.title}`;
+    div.className = "question-item";
+    if (i > 0 && !progress[i - 1]) div.classList.add("locked");
+    if (i === currentQuestionIndex) div.classList.add("active");
+    if (progress[i]) div.classList.add("completed");
+    div.onclick = () => {
+      if (i === 0 || progress[i - 1]) {
+        currentQuestionIndex = i;
+        renderQuestion();
+      }
+    };
+    questionListEl.appendChild(div);
+  });
+}
+
+/* ======================
+   RENDER QUESTION
+====================== */
+
+function renderQuestion() {
+  renderQuestionList();
+  answersEl.innerHTML = "";
+  nextBtn.style.display = "none";
+
+  const q = questions[currentQuestionIndex];
+  questionTitleEl.textContent = q.title;
+  questionTextEl.textContent = q.text;
+
+  if (q.type === "matching") renderMatching(q);
+  if (q.type === "grid") renderGrid();
+  if (q.type === "multiple-choice") renderMC(q);
+}
+
+/* ======================
+   MATCHING QUESTION
+====================== */
+
+let selectedLeft = null;
+let matches = {};
+
+function renderMatching(q) {
+  matches = {};
+  selectedLeft = null;
+
+  const container = document.createElement("div");
+  container.className = "match-container";
+
+  const leftCol = document.createElement("div");
+  const rightCol = document.createElement("div");
+
+  q.left.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "match-item";
+    div.textContent = item;
+    div.onclick = () => {
+      selectedLeft = item;
+      document.querySelectorAll(".match-item").forEach(e => e.classList.remove("selected"));
+      div.classList.add("selected");
+    };
+    leftCol.appendChild(div);
+  });
+
+  q.right.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "match-item";
+    div.textContent = item;
+    div.onclick = () => {
+      if (selectedLeft) {
+        matches[selectedLeft] = item;
+        div.style.background = "#2ecc71";
+        selectedLeft = null;
       }
 
-      // Render current question
-      function renderQuestion() {
-        renderQuestionList();
-        const q = questions[currentQuestionIndex];
-        questionTitleEl.textContent = q.title;
-        questionTextEl.textContent = q.text;
-        answersEl.innerHTML = "";
-        nextBtn.style.display = "none";
-
-        q.options.forEach((opt, idx) => {
-          const btn = document.createElement("button");
-          btn.classList.add("answer-btn");
-          btn.textContent = opt.text;
-          btn.addEventListener("click", () => selectAnswer(btn, opt));
-          answersEl.appendChild(btn);
-        });
+      if (Object.keys(matches).length === q.left.length) {
+        checkMatching(q);
       }
+    };
+    rightCol.appendChild(div);
+  });
 
-      // Handle answer selection
-      function selectAnswer(button, option) {
-        // Disable all buttons
-        document
-          .querySelectorAll(".answer-btn")
-          .forEach((b) => (b.disabled = true));
+  container.appendChild(leftCol);
+  container.appendChild(rightCol);
+  answersEl.appendChild(container);
+}
 
-        if (option.correct) {
-          button.classList.add("correct");
-          alert(option.explanation);
-          progress[currentQuestionIndex] = true;
-          nextBtn.style.display = "inline-block";
-        } else {
-          button.classList.add("incorrect");
-          alert(option.explanation);
+function checkMatching(q) {
+  const correct = Object.keys(q.correctMatches).every(
+    k => q.correctMatches[k] === matches[k]
+  );
+
+  if (correct) {
+    alert("Correct!");
+    progress[currentQuestionIndex] = true;
+    nextBtn.style.display = "inline-block";
+  } else {
+    alert("Some matches are incorrect.");
+  }
+}
+
+/* ======================
+   GRID QUESTION
+====================== */
+
+function renderGrid() {
+  const canvas = document.createElement("canvas");
+  const size = 10;
+  const cell = 40;
+  canvas.width = canvas.height = size * cell;
+  answersEl.appendChild(canvas);
+
+  const ctx = canvas.getContext("2d");
+
+  const blocked = [
+    [3,3],[3,4],[3,5],
+    [5,5],[6,5],[7,5]
+  ];
+
+  let drawing = false;
+
+  function drawGrid() {
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        ctx.strokeStyle = "#999";
+        ctx.strokeRect(x*cell, y*cell, cell, cell);
+
+        if (blocked.some(b => b[0] === x && b[1] === y)) {
+          ctx.fillStyle = "black";
+          ctx.fillRect(x*cell, y*cell, cell, cell);
         }
-        renderQuestionList();
       }
+    }
 
-      // Next question
-      nextBtn.addEventListener("click", () => {
-        if (currentQuestionIndex < questions.length - 1) {
-          currentQuestionIndex++;
-          renderQuestion();
-        } else {
-          alert("🎉 You have completed all questions!");
-        }
-      });
+    ctx.fillStyle = "green";
+    ctx.fillRect(0, 0, cell, cell);
+    ctx.fillStyle = "red";
+    ctx.fillRect(9*cell, 9*cell, cell, cell);
+  }
 
-      // Initial render
-      renderQuestion();
-    </script>
-  </body>
+  drawGrid();
+
+  canvas.onmousedown = () => drawing = true;
+  canvas.onmouseup = () => {
+    drawing = false;
+    progress[currentQuestionIndex] = true;
+    alert("Path drawn!");
+    nextBtn.style.display = "inline-block";
+    renderQuestionList();
+  };
+
+  canvas.onmousemove = e => {
+    if (!drawing) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor((e.clientX - rect.left) / cell);
+    const y = Math.floor((e.clientY - rect.top) / cell);
+
+    if (!blocked.some(b => b[0] === x && b[1] === y)) {
+      ctx.fillStyle = "blue";
+      ctx.fillRect(x*cell, y*cell, cell, cell);
+    }
+  };
+}
+
+/* ======================
+   MULTIPLE CHOICE
+====================== */
+
+function renderMC(q) {
+  q.options.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.className = "answer-btn";
+    btn.textContent = opt.text;
+    btn.onclick = () => {
+      if (opt.correct) {
+        btn.classList.add("correct");
+        progress[currentQuestionIndex] = true;
+        nextBtn.style.display = "inline-block";
+      } else {
+        btn.classList.add("incorrect");
+      }
+      renderQuestionList();
+    };
+    answersEl.appendChild(btn);
+  });
+}
+
+/* ======================
+   NEXT
+====================== */
+
+nextBtn.onclick = () => {
+  currentQuestionIndex++;
+  renderQuestion();
+};
+
+renderQuestion();
+</script>
+</body>
 </html>
