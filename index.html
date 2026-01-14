@@ -125,16 +125,18 @@ const questions = [
     type: "matching",
     title: "Match Pathfinding Terms",
     text: "Match each term with its correct definition.",
-    left: ["Node", "Edge", "Obstacle"],
+    left: ["A", "B", "C"],
     right: [
-      "A point in the graph",
-      "A connection between nodes",
-      "A blocked or impassable area"
+      "Point graph",
+      "Grid graph",
+      "Hexagonal grid",
+      "NavMesh"
     ],
     correctMatches: {
-      Node: "A point in the graph",
-      Edge: "A connection between nodes",
-      Obstacle: "A blocked or impassable area"
+      C: "Point graph",
+      A: "Grid graph",
+      B: "Hexagonal grid",
+      D: "NavMesh"
     }
   },
 
@@ -375,3 +377,4 @@ renderQuestion();
 </script>
 </body>
 </html>
+
