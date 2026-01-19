@@ -76,7 +76,6 @@
       cursor: pointer;
     }
 
-    /* Matching */
     .match-container {
       display: flex;
       gap: 40px;
@@ -94,7 +93,6 @@
       background: #f1c40f;
     }
 
-    /* Grid */
     canvas {
       border: 2px solid #333;
       margin-top: 20px;
@@ -103,6 +101,7 @@
 </head>
 
 <body>
+
 <div id="sidebar">
   <h2>Questions</h2>
   <div id="question-list"></div>
@@ -126,38 +125,51 @@ const questions = [
     title: "Match Pathfinding Terms",
     text: "Match each term with its correct definition.",
     left: ["A", "B", "C", "D"],
-    right: [
-      "Point graph",
-      "Grid graph",
-      "Hexagonal grid",
-      "NavMesh"
-    ],
+    right: ["Point graph", "Grid graph", "Hexagonal grid", "NavMesh"],
     correctMatches: {
-      C: "Point graph",
       A: "Grid graph",
       B: "Hexagonal grid",
+      C: "Point graph",
       D: "NavMesh"
     }
   },
 
-  
   {
     type: "multiple-choice",
-    title: "Calculate distance",
-    text: "How long will the path be for: Euclidean and Manhattan",
+    title: "Calculate Distance",
+    text: "How long will the path be for Euclidean and Manhattan distance?",
     options: [
-      { text: "e: 11.14, m: 16", correct: false },
-      { text: "e: 13.63, m: 13", correct: true },
+      { text: "e: 11.14, m: 16", correct: true },
+      { text: "e: 13.63, m: 13", correct: false },
       { text: "e: 12.04, m: 17", correct: false }
     ]
   },
 
   {
+    type: "order",
+    title: "Pathfinding Steps",
+    text: "Put the steps of a pathfinding algorithm in the correct order.",
+    items: [
+      "Reconstruct the final path",
+      "Select the node with the lowest cost",
+      "Start at starting node",
+      "For the selected node, create 4 children nodes in all directions"
+    ],
+    correctOrder: [
+           "Start at starting node",
+      "Select the node with the lowest cost",
+            "For the selected node, create 4 children nodes in all directions",
+      "Reconstruct the final path"
+    ]
+  },
+
+  
+
+  {
     type: "grid",
     title: "Grid Path Drawing",
     text: "Draw a path from Start (green) to End (red). Avoid black squares."
-  },
-
+  }
 ];
 
 /* ======================
@@ -186,6 +198,7 @@ function renderQuestionList() {
     if (i > 0 && !progress[i - 1]) div.classList.add("locked");
     if (i === currentQuestionIndex) div.classList.add("active");
     if (progress[i]) div.classList.add("completed");
+
     div.onclick = () => {
       if (i === 0 || progress[i - 1]) {
         currentQuestionIndex = i;
@@ -210,12 +223,13 @@ function renderQuestion() {
   questionTextEl.textContent = q.text;
 
   if (q.type === "matching") renderMatching(q);
-  if (q.type === "grid") renderGrid();
   if (q.type === "multiple-choice") renderMC(q);
+  if (q.type === "order") renderOrder(q);
+  if (q.type === "grid") renderGrid();
 }
 
 /* ======================
-   MATCHING QUESTION
+   MATCHING
 ====================== */
 
 let selectedLeft = null;
@@ -253,10 +267,7 @@ function renderMatching(q) {
         div.style.background = "#2ecc71";
         selectedLeft = null;
       }
-
-      if (Object.keys(matches).length === q.left.length) {
-        checkMatching(q);
-      }
+      if (Object.keys(matches).length === q.left.length) checkMatching(q);
     };
     rightCol.appendChild(div);
   });
@@ -275,11 +286,75 @@ function checkMatching(q) {
     alert("Correct!");
     progress[currentQuestionIndex] = true;
     nextBtn.style.display = "inline-block";
+    renderQuestionList();
   } else {
     alert("Some matches are incorrect.");
-    selectedLeft = null
-    matches = {}
   }
+}
+
+/* ======================
+   ORDER QUESTION
+====================== */
+
+function renderOrder(q) {
+  let currentOrder = [...q.items];
+  const container = document.createElement("div");
+
+  function draw() {
+    container.innerHTML = "";
+    currentOrder.forEach((item, index) => {
+      const div = document.createElement("div");
+      div.className = "match-item";
+      div.textContent = item;
+
+      const up = document.createElement("button");
+      up.textContent = "↑";
+      up.onclick = () => {
+        if (index > 0) {
+          [currentOrder[index - 1], currentOrder[index]] =
+          [currentOrder[index], currentOrder[index - 1]];
+          draw();
+        }
+      };
+
+      const down = document.createElement("button");
+      down.textContent = "↓";
+      down.onclick = () => {
+        if (index < currentOrder.length - 1) {
+          [currentOrder[index + 1], currentOrder[index]] =
+          [currentOrder[index], currentOrder[index + 1]];
+          draw();
+        }
+      };
+
+      div.appendChild(up);
+      div.appendChild(down);
+      container.appendChild(div);
+    });
+  }
+
+  draw();
+  answersEl.appendChild(container);
+
+  const checkBtn = document.createElement("button");
+  checkBtn.className = "answer-btn";
+  checkBtn.textContent = "Check Order";
+
+  checkBtn.onclick = () => {
+    const correct = q.correctOrder.every(
+      (item, i) => item === currentOrder[i]
+    );
+    if (correct) {
+      alert("Correct order!");
+      progress[currentQuestionIndex] = true;
+      nextBtn.style.display = "inline-block";
+      renderQuestionList();
+    } else {
+      alert("Incorrect order. Try again.");
+    }
+  };
+
+  answersEl.appendChild(checkBtn);
 }
 
 /* ======================
@@ -294,20 +369,32 @@ function renderGrid() {
   answersEl.appendChild(canvas);
 
   const ctx = canvas.getContext("2d");
-
-  const blocked = [
-    [3,3],[3,4],[3,5],
-    [5,5],[6,5],[7,5]
-  ];
-
+  const blocked = [[3,3],[3,4],[3,5],[5,5],[6,5],[7,5]];
   let drawing = false;
 
+/* ======================
+   GRID QUESTION (Improved)
+====================== */
+
+function renderGrid() {
+  const canvas = document.createElement("canvas");
+  const size = 10;
+  const cell = 40;
+  canvas.width = canvas.height = size * cell;
+  answersEl.appendChild(canvas);
+
+  const ctx = canvas.getContext("2d");
+  const blocked = [[3,3],[3,4],[3,5],[5,5],[6,5],[7,5]];
+
+  let drawing = false;
+  let pathOrder = 0; // keeps track of order of placed squares
+
   function drawGrid() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
         ctx.strokeStyle = "#999";
         ctx.strokeRect(x*cell, y*cell, cell, cell);
-
         if (blocked.some(b => b[0] === x && b[1] === y)) {
           ctx.fillStyle = "black";
           ctx.fillRect(x*cell, y*cell, cell, cell);
@@ -315,22 +402,20 @@ function renderGrid() {
       }
     }
 
+    // Start and End
     ctx.fillStyle = "green";
-    ctx.fillRect(0, 0, cell, cell);
+    ctx.fillRect(0,0,cell,cell);
     ctx.fillStyle = "red";
-    ctx.fillRect(9*cell, 9*cell, cell, cell);
+    ctx.fillRect(9*cell,9*cell,cell,cell);
   }
 
   drawGrid();
 
+  // track drawn squares
+  const drawnSquares = [];
+
   canvas.onmousedown = () => drawing = true;
-  canvas.onmouseup = () => {
-    drawing = false;
-    progress[currentQuestionIndex] = true;
-    alert("Path drawn!");
-    nextBtn.style.display = "inline-block";
-    renderQuestionList();
-  };
+  canvas.onmouseup = () => drawing = false;
 
   canvas.onmousemove = e => {
     if (!drawing) return;
@@ -338,12 +423,44 @@ function renderGrid() {
     const x = Math.floor((e.clientX - rect.left) / cell);
     const y = Math.floor((e.clientY - rect.top) / cell);
 
-    if (!blocked.some(b => b[0] === x && b[1] === y)) {
-      ctx.fillStyle = "blue";
-      ctx.fillRect(x*cell, y*cell, cell, cell);
-    }
+    // Skip blocked or start/end
+    if (blocked.some(b => b[0] === x && b[1] === y)) return;
+    if ((x === 0 && y === 0) || (x === 9 && y === 9)) return;
+
+    // avoid duplicates
+    if (drawnSquares.some(d => d[0] === x && d[1] === y)) return;
+
+    pathOrder++;
+    drawnSquares.push([x,y,pathOrder]);
+
+    // gradual color from blue → green
+    const maxOrder = 100; // can be more if needed
+    const ratio = Math.min(pathOrder / maxOrder, 1);
+    const r = Math.floor(0 * (1-ratio) + 0 * ratio);
+    const g = Math.floor(0 * (1-ratio) + 255 * ratio);
+    const b = Math.floor(255 * (1-ratio) + 0 * ratio);
+    ctx.fillStyle = `rgb(${r},${g},${b})`;
+    ctx.fillRect(x*cell, y*cell, cell, cell);
   };
+
+  // Finish button
+  const finishBtn = document.createElement("button");
+  finishBtn.textContent = "Finish Drawing";
+  finishBtn.className = "answer-btn";
+  finishBtn.onclick = () => {
+    if (drawnSquares.length === 0) {
+      alert("You haven't drawn any path yet!");
+      return;
+    }
+    alert("Path finished!");
+    progress[currentQuestionIndex] = true;
+    nextBtn.style.display = "inline-block";
+    renderQuestionList();
+  };
+
+  answersEl.appendChild(finishBtn);
 }
+
 
 /* ======================
    MULTIPLE CHOICE
