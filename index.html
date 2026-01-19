@@ -155,37 +155,7 @@ const questions = [
     text: "Draw a path from Start (green) to End (red). Avoid black squares."
   },
 
-  {
-    type: "randomizer",
-    title: "Random Pathfinding Question",
-    text: "Answer the randomly selected question.",
-    pool: [
-      {
-        text: "Which algorithm guarantees the shortest path?",
-        options: [
-          { text: "DFS", correct: false },
-          { text: "BFS", correct: true },
-          { text: "Greedy Best First", correct: false }
-        ]
-      },
-      {
-        text: "Which algorithm uses heuristics?",
-        options: [
-          { text: "Dijkstra", correct: false },
-          { text: "A*", correct: true },
-          { text: "BFS", correct: false }
-        ]
-      },
-      {
-        text: "Which graph type uses weights?",
-        options: [
-          { text: "Tree", correct: false },
-          { text: "Weighted graph", correct: true },
-          { text: "Unweighted graph", correct: false }
-        ]
-      }
-    ]
-  }
+
 ];
 
 /* ======================
@@ -498,5 +468,6 @@ renderQuestion();
 </script>
 </body>
 </html>
+
 
 
