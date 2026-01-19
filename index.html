@@ -1,105 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pathfinding Learning Website</title>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      display: flex;
-      height: 100vh;
-    }
-
-    #sidebar {
-      width: 250px;
-      background-color: #2c3e50;
-      color: #ecf0f1;
-      padding: 20px;
-      overflow-y: auto;
-    }
-
-    .question-item {
-      padding: 10px;
-      margin-bottom: 5px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    .question-item.locked {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .question-item.active {
-      background-color: #2980b9;
-    }
-
-    .question-item.completed {
-      background-color: #27ae60;
-    }
-
-    #main {
-      flex: 1;
-      padding: 40px;
-    }
-
-    .answer-btn {
-      display: block;
-      padding: 10px;
-      margin: 10px 0;
-      background-color: #3498db;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    .answer-btn.correct {
-      background-color: #27ae60;
-    }
-
-    .answer-btn.incorrect {
-      background-color: #c0392b;
-    }
-
-    #next-btn {
-      margin-top: 20px;
-      padding: 10px 20px;
-      background-color: #f39c12;
-      border: none;
-      border-radius: 5px;
-      color: white;
-      display: none;
-      cursor: pointer;
-    }
-
-    .match-container {
-      display: flex;
-      gap: 40px;
-    }
-
-    .match-item {
-      padding: 8px;
-      background: #ecf0f1;
-      margin-bottom: 5px;
-      cursor: pointer;
-      border-radius: 5px;
-    }
-
-    .selected {
-      background: #f1c40f;
-    }
-
-    canvas {
-      border: 2px solid #333;
-      margin-top: 20px;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pathfinding Learning Website</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  display: flex;
+  height: 100vh;
+}
+#sidebar {
+  width: 250px;
+  background-color: #2c3e50;
+  color: #ecf0f1;
+  padding: 20px;
+  overflow-y: auto;
+}
+.question-item {
+  padding: 10px;
+  margin-bottom: 5px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.question-item.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.question-item.active {
+  background-color: #2980b9;
+}
+.question-item.completed {
+  background-color: #27ae60;
+}
+#main {
+  flex: 1;
+  padding: 40px;
+}
+.answer-btn {
+  display: block;
+  padding: 10px;
+  margin: 10px 0;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.answer-btn.correct {
+  background-color: #27ae60;
+}
+.answer-btn.incorrect {
+  background-color: #c0392b;
+}
+#next-btn {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #f39c12;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  display: none;
+  cursor: pointer;
+}
+.match-container {
+  display: flex;
+  gap: 40px;
+}
+.match-item {
+  padding: 8px;
+  background: #ecf0f1;
+  margin-bottom: 5px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+.selected {
+  background: #f1c40f;
+}
+canvas {
+  border: 2px solid #333;
+  margin-top: 20px;
+}
+</style>
 </head>
-
 <body>
 
 <div id="sidebar">
@@ -133,7 +117,6 @@ const questions = [
       D: "NavMesh"
     }
   },
-
   {
     type: "multiple-choice",
     title: "Calculate Distance",
@@ -144,7 +127,6 @@ const questions = [
       { text: "e: 12.04, m: 17", correct: false }
     ]
   },
-
   {
     type: "order",
     title: "Pathfinding Steps",
@@ -156,15 +138,12 @@ const questions = [
       "For the selected node, create 4 children nodes in all directions"
     ],
     correctOrder: [
-           "Start at starting node",
+      "Start at starting node",
       "Select the node with the lowest cost",
-            "For the selected node, create 4 children nodes in all directions",
+      "For the selected node, create 4 children nodes in all directions",
       "Reconstruct the final path"
     ]
   },
-
-  
-
   {
     type: "grid",
     title: "Grid Path Drawing",
@@ -370,113 +349,86 @@ function renderGrid() {
 
   const ctx = canvas.getContext("2d");
   const blocked = [[3,3],[3,4],[3,5],[5,5],[6,5],[7,5]];
-  let drawing = false;
-
-/* ======================
-   GRID QUESTION (Improved)
-====================== */
-
-function renderGrid() {
-  const canvas = document.createElement("canvas");
-  const size = 10;
-  const cell = 40;
-  canvas.width = canvas.height = size * cell;
-  answersEl.appendChild(canvas);
-
-  const ctx = canvas.getContext("2d");
-  const blocked = [[3,3],[3,4],[3,5],[5,5],[6,5],[7,5]];
 
   let drawing = false;
-  let pathOrder = 0; // keeps track of order of placed squares
+  let pathOrder = 0;
+  const drawnSquares = [];
 
   function drawGrid() {
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    for (let y = 0; y < size; y++) {
-      for (let x = 0; x < size; x++) {
+    for (let y=0;y<size;y++){
+      for (let x=0;x<size;x++){
         ctx.strokeStyle = "#999";
-        ctx.strokeRect(x*cell, y*cell, cell, cell);
-        if (blocked.some(b => b[0] === x && b[1] === y)) {
-          ctx.fillStyle = "black";
-          ctx.fillRect(x*cell, y*cell, cell, cell);
+        ctx.strokeRect(x*cell,y*cell,cell,cell);
+        if(blocked.some(b=>b[0]===x && b[1]===y)){
+          ctx.fillStyle="black";
+          ctx.fillRect(x*cell,y*cell,cell,cell);
         }
       }
     }
-
-    // Start and End
-    ctx.fillStyle = "green";
-    ctx.fillRect(0,0,cell,cell);
-    ctx.fillStyle = "red";
-    ctx.fillRect(9*cell,9*cell,cell,cell);
+    ctx.fillStyle="green"; ctx.fillRect(0,0,cell,cell);
+    ctx.fillStyle="red"; ctx.fillRect(9*cell,9*cell,cell,cell);
   }
 
   drawGrid();
 
-  // track drawn squares
-  const drawnSquares = [];
-
-  canvas.onmousedown = () => drawing = true;
-  canvas.onmouseup = () => drawing = false;
+  canvas.onmousedown = ()=>drawing=true;
+  canvas.onmouseup = ()=>drawing=false;
 
   canvas.onmousemove = e => {
-    if (!drawing) return;
+    if(!drawing) return;
     const rect = canvas.getBoundingClientRect();
-    const x = Math.floor((e.clientX - rect.left) / cell);
-    const y = Math.floor((e.clientY - rect.top) / cell);
+    const x = Math.floor((e.clientX - rect.left)/cell);
+    const y = Math.floor((e.clientY - rect.top)/cell);
 
-    // Skip blocked or start/end
-    if (blocked.some(b => b[0] === x && b[1] === y)) return;
-    if ((x === 0 && y === 0) || (x === 9 && y === 9)) return;
-
-    // avoid duplicates
-    if (drawnSquares.some(d => d[0] === x && d[1] === y)) return;
+    if(blocked.some(b=>b[0]===x && b[1]===y)) return;
+    if((x===0 && y===0)||(x===9 && y===9)) return;
+    if(drawnSquares.some(d=>d[0]===x && d[1]===y)) return;
 
     pathOrder++;
     drawnSquares.push([x,y,pathOrder]);
 
-    // gradual color from blue → green
-    const maxOrder = 100; // can be more if needed
-    const ratio = Math.min(pathOrder / maxOrder, 1);
-    const r = Math.floor(0 * (1-ratio) + 0 * ratio);
-    const g = Math.floor(0 * (1-ratio) + 255 * ratio);
-    const b = Math.floor(255 * (1-ratio) + 0 * ratio);
+    const maxOrder = 100;
+    const ratio = Math.min(pathOrder/maxOrder,1);
+    const r = 0;
+    const g = Math.floor(255*ratio);
+    const b = Math.floor(255*(1-ratio));
     ctx.fillStyle = `rgb(${r},${g},${b})`;
-    ctx.fillRect(x*cell, y*cell, cell, cell);
+    ctx.fillRect(x*cell,y*cell,cell,cell);
   };
 
-  // Finish button
   const finishBtn = document.createElement("button");
-  finishBtn.textContent = "Finish Drawing";
-  finishBtn.className = "answer-btn";
-  finishBtn.onclick = () => {
-    if (drawnSquares.length === 0) {
+  finishBtn.textContent="Finish Drawing";
+  finishBtn.className="answer-btn";
+  finishBtn.onclick = ()=>{
+    if(drawnSquares.length===0){
       alert("You haven't drawn any path yet!");
       return;
     }
     alert("Path finished!");
-    progress[currentQuestionIndex] = true;
-    nextBtn.style.display = "inline-block";
+    progress[currentQuestionIndex]=true;
+    nextBtn.style.display="inline-block";
     renderQuestionList();
   };
 
   answersEl.appendChild(finishBtn);
 }
 
-
 /* ======================
    MULTIPLE CHOICE
 ====================== */
 
 function renderMC(q) {
-  q.options.forEach(opt => {
-    const btn = document.createElement("button");
-    btn.className = "answer-btn";
-    btn.textContent = opt.text;
-    btn.onclick = () => {
-      if (opt.correct) {
+  q.options.forEach(opt=>{
+    const btn=document.createElement("button");
+    btn.className="answer-btn";
+    btn.textContent=opt.text;
+    btn.onclick=()=>{
+      if(opt.correct){
         btn.classList.add("correct");
-        progress[currentQuestionIndex] = true;
-        nextBtn.style.display = "inline-block";
-      } else {
+        progress[currentQuestionIndex]=true;
+        nextBtn.style.display="inline-block";
+      }else{
         btn.classList.add("incorrect");
       }
       renderQuestionList();
@@ -489,7 +441,7 @@ function renderMC(q) {
    NEXT
 ====================== */
 
-nextBtn.onclick = () => {
+nextBtn.onclick=()=>{
   currentQuestionIndex++;
   renderQuestion();
 };
@@ -498,6 +450,4 @@ renderQuestion();
 </script>
 </body>
 </html>
-
-
 
