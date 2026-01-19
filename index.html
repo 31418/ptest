@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Pathfinding Learning Website</title>
+
 <style>
 body {
   font-family: Arial, sans-serif;
@@ -84,6 +85,7 @@ canvas {
 }
 </style>
 </head>
+
 <body>
 
 <div id="sidebar">
@@ -117,19 +119,7 @@ const questions = [
       D: "NavMesh"
     }
   },
-    {
-    type: "multiple-choice",
-    title: "Nodes",
-    text: "Which is a child node of a",
-    options: [
-      { text: "b", correct: false },
-      { text: "c", correct: false },
-      { text: "d", correct: false },
-      { text: "e", correct: true },
-      { text: "Multiple solutions", correct: true },
-      
-    ]
-  },
+
   {
     type: "multiple-choice",
     title: "Calculate Distance",
@@ -140,6 +130,7 @@ const questions = [
       { text: "e: 12.04, m: 17", correct: false }
     ]
   },
+
   {
     type: "order",
     title: "Pathfinding Steps",
@@ -148,31 +139,53 @@ const questions = [
       "Reconstruct the final path",
       "Select the node with the lowest cost",
       "Start at starting node",
-      "For the selected node, create 4 children nodes in all directions"
+      "For the selected node, create 4 children nodes"
     ],
     correctOrder: [
       "Start at starting node",
       "Select the node with the lowest cost",
-      "For the selected node, create 4 children nodes in all directions",
+      "For the selected node, create 4 children nodes",
       "Reconstruct the final path"
     ]
   },
+
   {
     type: "grid",
     title: "Grid Path Drawing",
     text: "Draw a path from Start (green) to End (red). Avoid black squares."
   },
+
   {
-    type: "multiple-choice",
-    title: "Interactive option 1",
-    text: "https://saha-raj.github.io/ai-pathfinding-algos/#:~:text=An%20interactive%20visualization%20of%20popular%20pathfinding%20algorithms%20including,computer%20science%20for%20finding%20paths%20through%20complex%20spaces.",
-    options: [
-      { text: "Yes", correct: true },
-      
+    type: "randomizer",
+    title: "Random Pathfinding Question",
+    text: "Answer the randomly selected question.",
+    pool: [
+      {
+        text: "Which algorithm guarantees the shortest path?",
+        options: [
+          { text: "DFS", correct: false },
+          { text: "BFS", correct: true },
+          { text: "Greedy Best First", correct: false }
+        ]
+      },
+      {
+        text: "Which algorithm uses heuristics?",
+        options: [
+          { text: "Dijkstra", correct: false },
+          { text: "A*", correct: true },
+          { text: "BFS", correct: false }
+        ]
+      },
+      {
+        text: "Which graph type uses weights?",
+        options: [
+          { text: "Tree", correct: false },
+          { text: "Weighted graph", correct: true },
+          { text: "Unweighted graph", correct: false }
+        ]
+      }
     ]
-  },
-
-
+  }
 ];
 
 /* ======================
@@ -201,7 +214,6 @@ function renderQuestionList() {
     if (i > 0 && !progress[i - 1]) div.classList.add("locked");
     if (i === currentQuestionIndex) div.classList.add("active");
     if (progress[i]) div.classList.add("completed");
-
     div.onclick = () => {
       if (i === 0 || progress[i - 1]) {
         currentQuestionIndex = i;
@@ -229,6 +241,7 @@ function renderQuestion() {
   if (q.type === "multiple-choice") renderMC(q);
   if (q.type === "order") renderOrder(q);
   if (q.type === "grid") renderGrid();
+  if (q.type === "randomizer") renderRandomizer(q);
 }
 
 /* ======================
@@ -296,14 +309,14 @@ function checkMatching(q) {
 }
 
 /* ======================
-   ORDER QUESTION
+   ORDER
 ====================== */
 
 function renderOrder(q) {
   let currentOrder = [...q.items];
   const container = document.createElement("div");
 
-  function draw() {
+  function redraw() {
     container.innerHTML = "";
     currentOrder.forEach((item, index) => {
       const div = document.createElement("div");
@@ -316,7 +329,7 @@ function renderOrder(q) {
         if (index > 0) {
           [currentOrder[index - 1], currentOrder[index]] =
           [currentOrder[index], currentOrder[index - 1]];
-          draw();
+          redraw();
         }
       };
 
@@ -326,7 +339,7 @@ function renderOrder(q) {
         if (index < currentOrder.length - 1) {
           [currentOrder[index + 1], currentOrder[index]] =
           [currentOrder[index], currentOrder[index + 1]];
-          draw();
+          redraw();
         }
       };
 
@@ -336,7 +349,7 @@ function renderOrder(q) {
     });
   }
 
-  draw();
+  redraw();
   answersEl.appendChild(container);
 
   const checkBtn = document.createElement("button");
@@ -344,16 +357,14 @@ function renderOrder(q) {
   checkBtn.textContent = "Check Order";
 
   checkBtn.onclick = () => {
-    const correct = q.correctOrder.every(
-      (item, i) => item === currentOrder[i]
-    );
+    const correct = q.correctOrder.every((item, i) => item === currentOrder[i]);
     if (correct) {
       alert("Correct order!");
       progress[currentQuestionIndex] = true;
       nextBtn.style.display = "inline-block";
       renderQuestionList();
     } else {
-      alert("Incorrect order. Try again.");
+      alert("Incorrect order.");
     }
   };
 
@@ -361,10 +372,10 @@ function renderOrder(q) {
 }
 
 /* ======================
-   GRID QUESTION
+   GRID
 ====================== */
 
-function renderGrid(blockedd = [[3,3],[3,4],[3,5],[5,5],[6,5],[7,5]]) {
+function renderGrid() {
   const canvas = document.createElement("canvas");
   const size = 10;
   const cell = 40;
@@ -372,17 +383,15 @@ function renderGrid(blockedd = [[3,3],[3,4],[3,5],[5,5],[6,5],[7,5]]) {
   answersEl.appendChild(canvas);
 
   const ctx = canvas.getContext("2d");
-  const blocked = blockedd
+  const blocked = [[3,3],[3,4],[3,5],[5,5],[6,5],[7,5]];
 
   let drawing = false;
   let pathOrder = 0;
-  const drawnSquares = [];
+  const drawn = [];
 
   function drawGrid() {
-    ctx.clearRect(0,0,canvas.width,canvas.height);
     for (let y=0;y<size;y++){
       for (let x=0;x<size;x++){
-        ctx.strokeStyle = "#999";
         ctx.strokeRect(x*cell,y*cell,cell,cell);
         if(blocked.some(b=>b[0]===x && b[1]===y)){
           ctx.fillStyle="black";
@@ -396,42 +405,31 @@ function renderGrid(blockedd = [[3,3],[3,4],[3,5],[5,5],[6,5],[7,5]]) {
 
   drawGrid();
 
-  canvas.onmousedown = ()=>drawing=true;
-  canvas.onmouseup = ()=>drawing=false;
+  canvas.onmousedown = () => drawing = true;
+  canvas.onmouseup = () => drawing = false;
 
   canvas.onmousemove = e => {
-    if(!drawing) return;
+    if (!drawing) return;
     const rect = canvas.getBoundingClientRect();
     const x = Math.floor((e.clientX - rect.left)/cell);
     const y = Math.floor((e.clientY - rect.top)/cell);
 
-    if(blocked.some(b=>b[0]===x && b[1]===y)) return;
-    if((x===0 && y===0)||(x===9 && y===9)) return;
-    if(drawnSquares.some(d=>d[0]===x && d[1]===y)) return;
+    if (blocked.some(b=>b[0]===x && b[1]===y)) return;
+    if (drawn.some(d=>d[0]===x && d[1]===y)) return;
 
     pathOrder++;
-    drawnSquares.push([x,y,pathOrder]);
-
-    const maxOrder = 100;
-    const ratio = Math.min(pathOrder/maxOrder,1);
-    const r = 0;
-    const g = Math.floor(255*ratio);
-    const b = Math.floor(255*(1-ratio));
-    ctx.fillStyle = `rgb(${r},${g},${b})`;
+    drawn.push([x,y]);
+    const ratio = Math.min(pathOrder/100,1);
+    ctx.fillStyle = `rgb(0,${Math.floor(255*ratio)},${Math.floor(255*(1-ratio))})`;
     ctx.fillRect(x*cell,y*cell,cell,cell);
   };
 
   const finishBtn = document.createElement("button");
-  finishBtn.textContent="Finish Drawing";
-  finishBtn.className="answer-btn";
-  finishBtn.onclick = ()=>{
-    if(drawnSquares.length===0){
-      alert("You haven't drawn any path yet!");
-      return;
-    }
-    alert("Path finished!");
-    progress[currentQuestionIndex]=true;
-    nextBtn.style.display="inline-block";
+  finishBtn.textContent = "Finish Drawing";
+  finishBtn.className = "answer-btn";
+  finishBtn.onclick = () => {
+    progress[currentQuestionIndex] = true;
+    nextBtn.style.display = "inline-block";
     renderQuestionList();
   };
 
@@ -439,20 +437,46 @@ function renderGrid(blockedd = [[3,3],[3,4],[3,5],[5,5],[6,5],[7,5]]) {
 }
 
 /* ======================
-   MULTIPLE CHOICE
+   RANDOMIZER
+====================== */
+
+function renderRandomizer(q) {
+  const selected = q.pool[Math.floor(Math.random() * q.pool.length)];
+  questionTextEl.textContent = selected.text;
+
+  [...selected.options].sort(() => Math.random() - 0.5).forEach(opt => {
+    const btn = document.createElement("button");
+    btn.className = "answer-btn";
+    btn.textContent = opt.text;
+    btn.onclick = () => {
+      if (opt.correct) {
+        btn.classList.add("correct");
+        progress[currentQuestionIndex] = true;
+        nextBtn.style.display = "inline-block";
+      } else {
+        btn.classList.add("incorrect");
+      }
+      renderQuestionList();
+    };
+    answersEl.appendChild(btn);
+  });
+}
+
+/* ======================
+   MC
 ====================== */
 
 function renderMC(q) {
-  q.options.forEach(opt=>{
-    const btn=document.createElement("button");
-    btn.className="answer-btn";
-    btn.textContent=opt.text;
-    btn.onclick=()=>{
-      if(opt.correct){
+  q.options.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.className = "answer-btn";
+    btn.textContent = opt.text;
+    btn.onclick = () => {
+      if (opt.correct) {
         btn.classList.add("correct");
-        progress[currentQuestionIndex]=true;
-        nextBtn.style.display="inline-block";
-      }else{
+        progress[currentQuestionIndex] = true;
+        nextBtn.style.display = "inline-block";
+      } else {
         btn.classList.add("incorrect");
       }
       renderQuestionList();
@@ -465,7 +489,7 @@ function renderMC(q) {
    NEXT
 ====================== */
 
-nextBtn.onclick=()=>{
+nextBtn.onclick = () => {
   currentQuestionIndex++;
   renderQuestion();
 };
@@ -474,9 +498,5 @@ renderQuestion();
 </script>
 </body>
 </html>
-
-
-
-
 
 
