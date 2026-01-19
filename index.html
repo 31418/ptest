@@ -117,6 +117,25 @@ const questions = [
       D: "NavMesh"
     }
   },
+    {
+    type: "multiple-choice",
+    title: "Nodes",
+    text: "Which is a child node of a",
+    options: [
+      { text: "b", correct: false },
+      { text: "c", correct: false },
+      { text: "d", correct: false },
+      { text: "e", correct: true },
+      { text: "Multiple solutions", correct: true },
+      
+    ]
+  },
+    {
+    type: "grid",
+    title: "Grid",
+    text: "Grid,
+    [[0, 4], [9, 10]]
+  },
   {
     type: "multiple-choice",
     title: "Calculate Distance",
@@ -148,7 +167,18 @@ const questions = [
     type: "grid",
     title: "Grid Path Drawing",
     text: "Draw a path from Start (green) to End (red). Avoid black squares."
-  }
+  },
+  {
+    type: "multiple-choice",
+    title: "Interactive option 1",
+    text: "https://saha-raj.github.io/ai-pathfinding-algos/#:~:text=An%20interactive%20visualization%20of%20popular%20pathfinding%20algorithms%20including,computer%20science%20for%20finding%20paths%20through%20complex%20spaces."
+    options: [
+      { text: "Yes", correct: true },
+      
+    ]
+  },
+
+
 ];
 
 /* ======================
@@ -340,7 +370,7 @@ function renderOrder(q) {
    GRID QUESTION
 ====================== */
 
-function renderGrid() {
+function renderGrid(blockedd = [[3,3],[3,4],[3,5],[5,5],[6,5],[7,5]];) {
   const canvas = document.createElement("canvas");
   const size = 10;
   const cell = 40;
@@ -348,7 +378,7 @@ function renderGrid() {
   answersEl.appendChild(canvas);
 
   const ctx = canvas.getContext("2d");
-  const blocked = [[3,3],[3,4],[3,5],[5,5],[6,5],[7,5]];
+  const blocked = blockedd
 
   let drawing = false;
   let pathOrder = 0;
@@ -450,4 +480,5 @@ renderQuestion();
 </script>
 </body>
 </html>
+
 
